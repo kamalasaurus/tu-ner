@@ -40,8 +40,18 @@ class TuNer extends HTMLElement {
 
   note(freq) {
     const A0 = 27.5;
-    const interval = Math.log2(freq / A0) * 12 >>> 0;
-    return `${this.notes[interval % 12]}${interval / 12 >>> 0}`
+    const base_interval = Math.log2(freq / A0) * 12;
+    const interval = [Math.ceil(base_interval), Math.floor(base_interval)]
+      .map((i) => [Math.abs(freq - this.to_f(i)), i])
+      .reduce(([d1, i1], [d2, i2]) => {
+        return d1 < d2 ? i1 : i2;
+      }).pop();
+
+    return `${this.notes[interval % 12]}${interval / 12 | 0}`
+  }
+
+  to_f(interval) {
+    return 27.5 * Math.pow(2, interval/12)
   }
 }
 
