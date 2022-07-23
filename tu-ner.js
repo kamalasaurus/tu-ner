@@ -1,6 +1,6 @@
 class TuNer extends HTMLElement {
-  notes = ['A♭', 'A', 'B♭', 'B', 'C', 'D♭', 'D', 'E♭',
-    'E', 'F', 'G♭', 'G' ]
+  notes = ['A', 'B♭', 'B', 'C', 'D♭', 'D', 'E♭',
+    'E', 'F', 'G♭', 'G', 'A♭']
   f = document.createElement('div');
   n = document.createElement('div');
 
@@ -41,11 +41,9 @@ class TuNer extends HTMLElement {
   note(freq) {
     const A0 = 27.5;
     const base_interval = Math.log2(freq / A0) * 12;
-    const interval = [Math.ceil(base_interval), Math.floor(base_interval)]
-      .map((i) => [Math.abs(freq - this.to_f(i)), i])
-      .reduce(([d1, i1], [d2, i2]) => {
-        return d1 < d2 ? i1 : i2;
-      }).pop();
+    const interval = Math.round(base_interval);
+
+      // indicate if you are sharp or flat!
 
     return `${this.notes[interval % 12]}${interval / 12 | 0}`
   }
