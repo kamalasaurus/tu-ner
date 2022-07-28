@@ -78,6 +78,10 @@ class TuNer extends HTMLElement {
     return 27.5 * Math.pow(2, interval/12)
   }
 
+  to_n(freq) {
+    return Math.log2(freq / 27.5) * 12
+  }
+
   renderChart(dataArray) {
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     const staticWidth = this.canvas.width / 328;
@@ -99,7 +103,57 @@ class TuNer extends HTMLElement {
   }
 }
 
+// log scale that aligns to musical notes
+// A0 * 2 ^ interval / 12
+// 50 cents around note collects to note?
+// 1 Hz is a bit lower than C, -5 octaves
+// focus on human audible spectrum, don't need ton of resolution that low
+// A-1 is 13.75 Hz, around where human hearing begins, so start from there
+// E9 is 22350 Hz, around where human hearing ends
+// Each bin is 24000/ 16384 Hz -- about 1.46484375 Hz -- can use this to group
+// by cents around frequency poles?  How many intervals between notes?  semitones
+// is 120 bins, quarter tones 480 bins
+
+/*
+  binWidth = 24000 / 16384
+  freq = i * binWidth
+  base_interval = i === 0 ? -51 : this.to_n(freq)
+  interval = Math.round(interval)
+  if (arr[interval + 51]) arr[interval] += val
+  else arr[interval + 51] = val
+*/
+
+/*
+const binWidth = 24000 / 16384
+dataArray
+  .reduce((arr, val, i) => {
+    const interval = Math.round(i === 0 ? -51 : this.to_n(i * binWidth))
+    if (arr[interval + 51]) arr[interval] += val
+    else arr[interval + 51] = val
+    return arr;
+  }, [])
+*/
+
+/*
+const binWidth = 24000 / 16384
+let averager = 1
+dataArray
+  .reduce((arr, val, i) => {
+    if (i < 19) return arr;
+    const interval = Math.round(this.to_n(i * binWidth))
+    if (arr[interval]) {
+      arr[interval] += dataArray.norm(val)
+    } else {
+      arr[interval - 1] = arr[interval - 1] / averager
+      arr[interval] = dataArray.norm(val)
+      averager = 1
+    }
+    return arr;
+  }, [])
+*/
+
 class maxFreqArray extends Uint8Array {
+  _binWidth = 24000 / 16384
   _maxDB = 0
   _maxFreq = 0
 
@@ -108,7 +162,7 @@ class maxFreqArray extends Uint8Array {
       return value > max[0] ? [value, index] : max;
     }, [0, 0]);
     this._maxDB = max[0];
-    this._maxFreq = max[1] * 24000 / 16384;
+    this._maxFreq = max[1] * this._binWidth;
     return this._maxFreq;
   }
 
