@@ -143,6 +143,7 @@ dataArray
     const interval = Math.round(this.to_n(i * binWidth))
     if (arr[interval]) {
       arr[interval] += dataArray.norm(val)
+      ++averager
     } else {
       arr[interval - 1] = arr[interval - 1] / averager
       arr[interval] = dataArray.norm(val)
