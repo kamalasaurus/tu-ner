@@ -9,6 +9,7 @@ class TuNer extends HTMLElement {
   container2 = document.createElement('div');
   canvas = document.createElement('canvas');
   context = this.canvas.getContext('2d');
+  container3 = document.createElement('div')
 
   constructor() {
     super();
@@ -20,7 +21,7 @@ class TuNer extends HTMLElement {
     this.canvas.width = window.innerWidth;
     this.canvas.style = 'width: 100%;';
     this.context.fillStyle = 'red';
-    this.shadowRoot.append(this.container1, this.container2);
+    this.shadowRoot.append(this.container1, this.container2, this.container3);
   }
 
   connectedCallback() {
@@ -82,26 +83,66 @@ class TuNer extends HTMLElement {
     return Math.log2(freq / 27.5) * 12
   }
 
+  to_label(n) {
+    const label = document.createElement('span')
+      label.innerHTML = n
+      label.style = 'display: inline-block; transform: rotate(-90deg);'
+    return label
+  }
+
+  // linear graph of limited utility
+  // renderChart_(dataArray) {
+  //   this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  //   const staticWidth = this.canvas.width / 328;
+  //   dataArray
+  //     .reduce((arr, val, i) => {
+  //       // instead of % 50, have to create a logarithmic scale here
+  //       if (i % 50 === 0) arr.unshift(dataArray.norm(val))
+  //       else arr[0] += dataArray.norm(val)
+  //       return arr;
+  //     }, []) // will produce array of 328 elements, MAKE THEM LOGARITHMIC!!
+  //     .forEach((h, i, args) => {
+  //       this.context.fillRect(
+  //         this.canvas.width - (staticWidth * i),
+  //         this.canvas.height,
+  //         staticWidth,
+  //         -(h / 50)
+  //       )
+  //     });
+  // }
+
   renderChart(dataArray) {
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    const staticWidth = this.canvas.width / 328;
+    const staticWidth = this.canvas.width / 118;
+    const binWidth = 24000 / 16384
+    let maxDB = 0
     dataArray
       .reduce((arr, val, i) => {
-        // instead of % 50, have to create a logarithmic scale here
-        if (i % 50 === 0) arr.unshift(dataArray.norm(val))
-        else arr[0] += dataArray.norm(val)
+        if (i < 19) return arr;
+        const interval = Math.round(this.to_n(i * binWidth))
+        if (arr[interval]) {
+          // arr[interval] += dataArray.norm(val)
+          arr[interval] += val
+          if (arr[interval] > maxDB) maxDB = arr[interval];
+        } else {
+          // arr[interval] = dataArray.norm(val)
+          arr[interval] = val
+        }
         return arr;
-      }, []) // will produce array of 328 elements, MAKE THEM LOGARITHMIC!!
-      .forEach((h, i, args) => {
+      }, [])
+      .map((val) => (100 * val / (maxDB || 1)))
+      .forEach((h, i) => {
         this.context.fillRect(
           this.canvas.width - (staticWidth * i),
           this.canvas.height,
           staticWidth,
           -(h / 50)
         )
-      });
+      })
+    console.log(maxDB)
   }
 }
+
 
 // log scale that aligns to musical notes
 // A0 * 2 ^ interval / 12
